@@ -86,7 +86,7 @@ export default NuxtAuthHandler({
 
       if (
         token.user.token.expiredAt &&
-        Date.now() + 30 * 86400 > token.user.token.expiredAt
+        Date.now() > token.user.token.expiredAt
       ) {
         console.log('jwt refreshToken')
 
@@ -126,7 +126,8 @@ async function fetchToken(credentials: Credentials): Promise<Token> {
 
   return {
     ...data,
-    expiredAt: Date.now() + 15 * 86400,
+    // expiredAt: Date.now() + 15 * 86400 * 1000,
+    expiredAt: Date.now() + 10 * 1000,
   }
 }
 
@@ -169,6 +170,7 @@ async function refreshToken(token: string) {
 
   return {
     ...data,
-    expiredAt: Date.now() + 15 * 86400,
+    // expiredAt: Date.now() + 15 * 86400 * 1000,
+    expiredAt: Date.now() + 10 * 1000,
   }
 }

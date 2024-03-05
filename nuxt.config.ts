@@ -20,8 +20,8 @@ export default defineNuxtConfig({
     passwordClientId: process.env.NUXT_PASSWORD_CLIENT_ID,
     passwordClientSecret: process.env.NUXT_PASSWORD_CLIENT_SECRET,
     public: {
-      testAccount: process.env.NUXT_TEST_ACCOUNT,
-      testPassword: process.env.NUXT_TEST_PASSWORD,
+      testAccount: process.env.NUXT_PUBLIC_TEST_ACCOUNT,
+      testPassword: process.env.NUXT_PUBLIC_TEST_PASSWORD,
     },
   },
 
