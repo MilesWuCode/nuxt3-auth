@@ -1,10 +1,7 @@
 <script lang="ts" setup></script>
 
 <template>
-  <div>
-    <Navbar />
-    <slot />
-  </div>
+  <div class="text-3xl">Page: login</div>
 </template>
 
 <style scoped></style>
