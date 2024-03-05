@@ -8,17 +8,18 @@ interface Credentials {
 
 interface TokenResponse {
   access_token: string
-  expires_in: string
+  expires_in: number
   refresh_token: string
+}
+
+interface Token extends TokenResponse {
+  expiredAt: number
 }
 
 interface UserResponse {
   id: number
   name: string
   email: string
-}
-interface User extends UserResponse {
-  token: TokenResponse
 }
 
 export default NuxtAuthHandler({
@@ -76,9 +77,22 @@ export default NuxtAuthHandler({
   ],
   callbacks: {
     // Callback when the JWT is created / updated, see https://next-auth.js.org/configuration/callbacks#jwt-callback
-    jwt: ({ token, user }) => {
+    jwt: async ({ token, user }) => {
       if (user) {
+        console.log('jwt user:', user)
+
         token.user = user
+      }
+
+      if (
+        token.user.token.expiredAt &&
+        Date.now() + 30 * 86400 > token.user.token.expiredAt
+      ) {
+        console.log('jwt refreshToken')
+
+        const newToken = await refreshToken(token.user.token.refresh_token)
+
+        token.user.token = newToken
       }
 
       return Promise.resolve(token)
@@ -92,10 +106,10 @@ export default NuxtAuthHandler({
   },
 })
 
-async function fetchToken(credentials: Credentials) {
+async function fetchToken(credentials: Credentials): Promise<Token> {
   const runtimeConfig = useRuntimeConfig()
 
-  return await $fetch<TokenResponse>(
+  const data = await $fetch<TokenResponse>(
     `${runtimeConfig.apiUrl}/auth/requestToken`,
     {
       method: 'POST',
@@ -109,6 +123,11 @@ async function fetchToken(credentials: Credentials) {
   ).catch(() => {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
   })
+
+  return {
+    ...data,
+    expiredAt: Date.now() + 15 * 86400,
+  }
 }
 
 async function fetchUser(accessToken: String) {
@@ -128,4 +147,28 @@ async function fetchUser(accessToken: String) {
   })
 
   return data
+}
+
+async function refreshToken(token: string) {
+  const runtimeConfig = useRuntimeConfig()
+
+  const data = await $fetch<TokenResponse>(
+    `${runtimeConfig.apiUrl}/auth/refreshToken`,
+    {
+      method: 'POST',
+      body: {
+        'client-id': runtimeConfig.passwordClientId,
+        'client-secret': runtimeConfig.passwordClientSecret,
+        'refresh-token': token,
+      },
+    },
+  ).catch((error) => {
+    console.log(error)
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  })
+
+  return {
+    ...data,
+    expiredAt: Date.now() + 15 * 86400,
+  }
 }
