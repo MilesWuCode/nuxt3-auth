@@ -1,4 +1,6 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+const { status, signOut } = useAuth()
+</script>
 
 <template>
   <div>
@@ -7,6 +9,9 @@
       <li><NuxtLink to="/login">login</NuxtLink></li>
       <li><NuxtLink to="/protected">protected</NuxtLink></li>
       <li><NuxtLink to="/guest">guest</NuxtLink></li>
+      <li v-if="status === 'authenticated'">
+        <a href="#" @click="signOut()">signOut</a>
+      </li>
     </ul>
   </div>
 </template>

@@ -3,7 +3,7 @@ definePageMeta({
   middleware: 'auth', // Only required if globalAppMiddleware is disabled
   auth: {
     unauthenticatedOnly: true,
-    navigateAuthenticatedTo: '/profile',
+    navigateAuthenticatedTo: '/',
   },
 })
 </script>
