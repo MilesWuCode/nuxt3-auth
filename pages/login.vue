@@ -9,16 +9,18 @@ definePageMeta({
 
 const { signIn } = useAuth()
 
+const runtimeConfig = useRuntimeConfig()
+
 const onSignIn = async () => {
   const { error, url }: any = await signIn('credentials', {
-    username: 'jsmith',
-    password: 'hunter2',
+    username: runtimeConfig.public.testAccount,
+    password: runtimeConfig.public.testPassword,
     redirect: false,
   })
 
   if (error) {
     // Do your custom error handling here
-    alert('You have made a terrible mistake while entering your credentials')
+    console.log(error)
   } else {
     // No error, continue with the sign in, e.g., by following the returned redirect:
     return navigateTo(url, { external: true })

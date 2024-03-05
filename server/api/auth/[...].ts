@@ -1,6 +1,26 @@
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { NuxtAuthHandler } from '#auth'
 
+interface Credentials {
+  username: string
+  password: string
+}
+
+interface TokenResponse {
+  access_token: string
+  expires_in: string
+  refresh_token: string
+}
+
+interface UserResponse {
+  id: number
+  name: string
+  email: string
+}
+interface User extends UserResponse {
+  token: TokenResponse
+}
+
 export default NuxtAuthHandler({
   secret: useRuntimeConfig().authSecret,
   pages: {
@@ -28,32 +48,84 @@ export default NuxtAuthHandler({
           placeholder: '(hint: hunter2)',
         },
       },
-      authorize(credentials: any) {
-        // You need to provide your own logic here that takes the credentials
-        // submitted and returns either a object representing a user or value
-        // that is false/null if the credentials are invalid.
-        // NOTE: THE BELOW LOGIC IS NOT SAFE OR PROPER FOR AUTHENTICATION!
-        const user = {
-          id: '1',
-          name: 'J Smith',
-          username: 'jsmith',
-          password: 'hunter2',
-        }
-        if (
-          credentials?.username === user.username &&
-          credentials?.password === user.password
-        ) {
-          // Any object returned will be saved in `user` property of the JWT
+      async authorize(credentials: Credentials) {
+        try {
+          const token = await fetchToken(credentials)
+
+          const data = await fetchUser(token.access_token)
+
+          const user = {
+            id: data.id,
+            name: data.name,
+            email: data.email,
+            token: {
+              ...token,
+            },
+          }
+
+          console.log('Authorize User:', user)
+
           return user
-        } else {
-          console.error(
-            'Warning: Malicious login attempt registered, bad credentials provided',
-          )
-          // If you return null then an error will be displayed advising the user to check their details.
+        } catch (error) {
+          console.warn('Authorize Error:', error)
+
           return null
-          // You can also Reject this callback with an Error thus the user will be sent to the error page with the error message as a query parameter
         }
       },
     }),
   ],
+  callbacks: {
+    // Callback when the JWT is created / updated, see https://next-auth.js.org/configuration/callbacks#jwt-callback
+    jwt: ({ token, user }) => {
+      if (user) {
+        token.user = user
+      }
+
+      return Promise.resolve(token)
+    },
+    // Callback whenever session is checked, see https://next-auth.js.org/configuration/callbacks#session-callback
+    session: ({ session, token }) => {
+      ;(session as any).user = token.user
+
+      return Promise.resolve(session)
+    },
+  },
 })
+
+async function fetchToken(credentials: Credentials) {
+  const runtimeConfig = useRuntimeConfig()
+
+  return await $fetch<TokenResponse>(
+    `${runtimeConfig.apiUrl}/auth/requestToken`,
+    {
+      method: 'POST',
+      body: {
+        'client-id': runtimeConfig.passwordClientId,
+        'client-secret': runtimeConfig.passwordClientSecret,
+        login: credentials.username,
+        password: credentials.password,
+      },
+    },
+  ).catch(() => {
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  })
+}
+
+async function fetchUser(accessToken: String) {
+  const runtimeConfig = useRuntimeConfig()
+
+  const { data } = await $fetch<{ data: UserResponse }>(
+    `${runtimeConfig.apiUrl}/api/a/owner/own`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  ).catch(() => {
+    throw createError({ statusCode: 400, statusMessage: 'Unauthorized' })
+  })
+
+  return data
+}
