@@ -1,5 +1,10 @@
 <template>
-  <div>
-    <NuxtWelcome />
-  </div>
+  <Html lang="zh-TW">
+    <Body>
+      <NuxtLoadingIndicator />
+      <NuxtLayout>
+        <NuxtPage />
+      </NuxtLayout>
+    </Body>
+  </Html>
 </template>
