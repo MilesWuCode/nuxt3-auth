@@ -77,23 +77,25 @@ export default NuxtAuthHandler({
   ],
   callbacks: {
     // Callback when the JWT is created / updated, see https://next-auth.js.org/configuration/callbacks#jwt-callback
-    jwt: async ({ token, user }) => {
+    jwt: ({ token, user }) => {
+      console.log('jwt')
+
       if (user) {
         console.log('jwt user:', user)
 
         token.user = user
       }
 
-      if (
-        token.user.token.expiredAt &&
-        Date.now() > token.user.token.expiredAt
-      ) {
-        console.log('jwt refreshToken')
+      // if (
+      //   token.user.token.expiredAt &&
+      //   Date.now() > token.user.token.expiredAt
+      // ) {
+      //   console.log('jwt refreshToken')
 
-        const newToken = await refreshToken(token.user.token.refresh_token)
+      //   const newToken = await refreshToken(token.user.token.refresh_token)
 
-        token.user.token = newToken
-      }
+      //   token.user.token = newToken
+      // }
 
       return Promise.resolve(token)
     },
@@ -126,8 +128,7 @@ async function fetchToken(credentials: Credentials): Promise<Token> {
 
   return {
     ...data,
-    // expiredAt: Date.now() + 15 * 86400 * 1000,
-    expiredAt: Date.now() + 10 * 1000,
+    expiredAt: Date.now() + 15 * 86400 * 1000,
   }
 }
 
@@ -170,7 +171,6 @@ async function refreshToken(token: string) {
 
   return {
     ...data,
-    // expiredAt: Date.now() + 15 * 86400 * 1000,
-    expiredAt: Date.now() + 10 * 1000,
+    expiredAt: Date.now() + 15 * 86400 * 1000,
   }
 }

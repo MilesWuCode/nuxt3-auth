@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+console.log('profile')
 definePageMeta({ middleware: 'auth' })
 
 const { data } = useAuth()
